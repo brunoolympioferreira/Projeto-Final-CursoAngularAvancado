@@ -1,15 +1,16 @@
+import { ContaService } from './services/conta.service';
 import { ContaAppComponent } from './conta.app.component';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { ContaRoutingModule } from './conta.route';
 
 import { CadastroComponent } from './cadastro/cadastro.component';
 import { LoginComponent } from './login/login.component';
 
-import { ContaRoutingModule } from './conta.route';
-
+import { NarikCustomValidatorsModule } from '@narik/custom-validators';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,11 @@ import { ContaRoutingModule } from './conta.route';
     ContaRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule
+    HttpClientModule,
+    NarikCustomValidatorsModule,
+  ],
+  providers: [
+    ContaService
   ]
 })
 export class ContaModule { }
