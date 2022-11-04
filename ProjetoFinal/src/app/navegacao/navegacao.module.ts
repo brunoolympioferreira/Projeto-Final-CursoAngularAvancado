@@ -1,3 +1,4 @@
+import { MenuLoginComponent } from './menu-login/menu-login.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { FooterComponent } from './footer/footer.component';
@@ -10,6 +11,7 @@ import { NgModule } from '@angular/core';
 @NgModule({
   declarations: [
     MenuComponent,
+    MenuLoginComponent,
     HomeComponent,
     FooterComponent,
     NotFoundComponent
