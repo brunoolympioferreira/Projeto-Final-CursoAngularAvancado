@@ -1,3 +1,4 @@
+import { ContaGuard } from './services/conta.guard';
 import { ContaService } from './services/conta.service';
 import { ContaAppComponent } from './conta.app.component';
 import { NgModule } from '@angular/core';
@@ -28,7 +29,8 @@ import { NarikCustomValidatorsModule } from '@narik/custom-validators';
     NarikCustomValidatorsModule,
   ],
   providers: [
-    ContaService
+    ContaService,
+    ContaGuard
   ]
 })
 export class ContaModule { }

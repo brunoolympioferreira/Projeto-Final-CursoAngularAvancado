@@ -1,11 +1,16 @@
-import { ValidationMessages, GenericValidator, DisplayMessage } from './../../utils/generic-form-validation';
-import { ContaService } from './../services/conta.service';
-import { Usuario } from './../models/usuario';
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChildren } from '@angular/core';
 import { FormBuilder, FormControl, FormControlName, FormGroup, Validators } from '@angular/forms';
-import { CustomValidators } from '@narik/custom-validators';
-import { Observable, fromEvent, merge } from 'rxjs';
 import { Router } from '@angular/router';
+
+import { Observable, fromEvent, merge } from 'rxjs';
+
+import { CustomValidators } from '@narik/custom-validators';
+import { ToastrService } from 'ngx-toastr';
+
+import { Usuario } from './../models/usuario';
+import { ContaService } from './../services/conta.service';
+import { ValidationMessages, GenericValidator, DisplayMessage } from './../../utils/generic-form-validation';
+
 
 @Component({
   selector: 'app-cadastro',
@@ -23,10 +28,13 @@ export class CadastroComponent implements OnInit, AfterViewInit {
   genericValidator: GenericValidator;
   displayMessage: DisplayMessage = {};
 
+  mudancasNaoSalvas: boolean;
+
   constructor(
     private fb: FormBuilder,
     private contaService: ContaService,
-    private router: Router) {
+    private router: Router,
+    private toastr: ToastrService) {
 
     this.validationMessages = {
       email: {
@@ -65,6 +73,7 @@ export class CadastroComponent implements OnInit, AfterViewInit {
 
     merge(...controlBlurs).subscribe(() => {
       this.displayMessage = this.genericValidator.processarMensagens(this.cadastroForm);
+      this.mudancasNaoSalvas = true;
     });
   }
 
@@ -77,6 +86,8 @@ export class CadastroComponent implements OnInit, AfterViewInit {
           sucessso => { this.processarSucesso(sucessso) },
           falha => { this.processarFalha(falha) }
         );
+
+      this.mudancasNaoSalvas = false;
     }
   }
 
@@ -86,11 +97,18 @@ export class CadastroComponent implements OnInit, AfterViewInit {
 
     this.contaService.LocalStorage.salvarDadosLocaisUsuario(response);
 
-    this.router.navigate(['/home'])
+    let toast = this.toastr.success('Registro realizado com sucesso!', 'Bem vindo!!!')
+
+    if (toast) {
+      toast.onHidden.subscribe(() => {
+        this.router.navigate(['/home'])
+      });
+    }
   }
 
   processarFalha(fail: any) {
     this.errors = fail.error.errors;
+    this.toastr.error('Ocorreu um erro!', 'Opa :(');
   }
 
 }
