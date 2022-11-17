@@ -8,8 +8,10 @@ import { ToastrService } from 'ngx-toastr';
 
 import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/utils/generic-form-validation';
 import { Fornecedor } from '../models/fornecedor';
-import { Endereco } from '../models/endereco';
+import { CepConsulta, Endereco } from '../models/endereco';
 import { FornecedorService } from '../services/fornecedor.service';
+import { StringUtils } from 'src/app/utils/string-utils';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-editar',
@@ -41,14 +43,17 @@ export class EditarComponent implements OnInit {
     private fornecedorService: FornecedorService,
     private router: Router,
     private toastr: ToastrService,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private modalService: NgbModal) {
 
     this.validationMessages = {
       nome: {
         required: 'Informe o Nome',
       },
       documento: {
-        required: 'Informe o Documento'
+        required: 'Informe o Documento',
+        cpf: 'CPF em formato inválido',
+        cnpj: 'CNPJ em formato inválido'
       },
       logradouro: {
         required: 'Informe o Logradouro',
@@ -60,7 +65,8 @@ export class EditarComponent implements OnInit {
         required: 'Informe o Bairro',
       },
       cep: {
-        required: 'Informe o CEP'
+        required: 'Informe o CEP',
+        cep: 'CEP em formato inválido',
       },
       cidade: {
         required: 'Informe a Cidade',
@@ -72,8 +78,8 @@ export class EditarComponent implements OnInit {
 
     this.genericValidator = new GenericValidator(this.validationMessages);
 
-    this.fornecedorService.obterPorId(route.params['id'])
-      .subscribe(fornecedor => this.fornecedor = fornecedor);
+    this.fornecedor = this.route.snapshot.data['fornecedor'];
+    this.tipoFornecedor = this.fornecedor.tipoFornecedor;
   }
 
   ngOnInit() {
@@ -97,16 +103,47 @@ export class EditarComponent implements OnInit {
       estado: ['', [Validators.required]],
       fornecedorId: ''
     });
+
+    this.preencherForm();
+  }
+
+  preencherForm() {
+    this.fornecedorForm.patchValue({
+      id: this.fornecedor.id,
+      nome: this.fornecedor.nome,
+      ativo: this.fornecedor.ativo,
+      tipoFornecedor: this.fornecedor.tipoFornecedor.toString(),
+      documento: this.fornecedor.documento
+    });
+
+    if (this.tipoFornecedorForm().value === "1") {
+      this.documento().setValidators([Validators.required]);
+    }
+    else {
+      this.documento().setValidators([Validators.required]);
+    }
+
+    this.enderecoForm.patchValue({
+      id: this.fornecedor.endereco.id,
+      logradouro: this.fornecedor.endereco.logradouro,
+      numero: this.fornecedor.endereco.numero,
+      complemento: this.fornecedor.endereco.complemento,
+      bairro: this.fornecedor.endereco.bairro,
+      cep: this.fornecedor.endereco.cep,
+      cidade: this.fornecedor.endereco.cidade,
+      estado: this.fornecedor.endereco.estado
+    });
   }
 
   ngAfterViewInit() {
-    let controlBlurs: Observable<any>[] = this.formInputElements
-      .map((formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur'));
+    this.tipoFornecedorForm().valueChanges
+      .subscribe(() => {
+        this.trocarValidacaoDocumento();
+        this.configurarElementosValidacao();
+        this.validarFormulario();
+      });
 
-    merge(...controlBlurs).subscribe(() => {
-      this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
-      this.mudancasNaoSalvas = true;
-    });
+    this.configurarElementosValidacao();
   }
 
   editarFornecedor() {
@@ -138,5 +175,97 @@ export class EditarComponent implements OnInit {
   processarFalha(fail: any) {
     this.errors = fail.error.errors;
     this.toastr.error('Ocorreu um erro!', 'Opa :(');
+  }
+
+  editarEndereco() {
+    if (this.enderecoForm.dirty && this.enderecoForm.valid) {
+
+      this.endereco = Object.assign({}, this.endereco, this.enderecoForm.value);
+
+      this.endereco.cep = StringUtils.somenteNumeros(this.endereco.cep);
+      this.endereco.fornecedorId = this.fornecedor.id;
+
+      this.fornecedorService.atualizarEndereco(this.endereco)
+        .subscribe({
+          next: () => this.processarSucessoEndereco(this.endereco),
+          error: falha => { this.processarFalhaEndereco(falha) }
+        });
+    }
+  }
+
+  processarSucessoEndereco(endereco: Endereco) {
+    this.errors = [];
+
+    this.toastr.success('Endereço atualizado com sucesso!', 'Sucesso!');
+    this.fornecedor.endereco = endereco
+    this.modalService.dismissAll();
+  }
+
+  processarFalhaEndereco(fail: any) {
+    this.errorsEndereco = fail.error.errors;
+    this.toastr.error('Ocorreu um erro!', 'Opa :(');
+  }
+
+  tipoFornecedorForm(): AbstractControl {
+    return this.fornecedorForm.get('tipoFornecedor');
+  }
+
+  documento(): AbstractControl {
+    return this.fornecedorForm.get('documento');
+  }
+
+  trocarValidacaoDocumento() {
+    if (this.tipoFornecedorForm().value === "1") {
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required]);
+      this.textoDocumento = "CPF (requerido)";
+    }
+    else {
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required]);
+      this.textoDocumento = "CNPJ (requerido)";
+    }
+  }
+
+  configurarElementosValidacao() {
+    let controlBlurs: Observable<any>[] = this.formInputElements
+      .map((formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur'));
+
+    merge(...controlBlurs).subscribe(() => {
+      this.validarFormulario();
+    });
+  }
+
+  validarFormulario() {
+    this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
+    this.mudancasNaoSalvas = true;
+  }
+
+  buscarCep(cep: string) {
+
+    cep = StringUtils.somenteNumeros(cep);
+    if (cep.length < 8) return;
+
+    this.fornecedorService.consultarCep(cep)
+      .subscribe({
+        next: cepRetorno => this.preencherEnderecoConsulta(cepRetorno),
+        error: erro => this.errors.push(erro)
+      });
+  }
+
+  preencherEnderecoConsulta(cepConsulta: CepConsulta) {
+
+    this.enderecoForm.patchValue({
+      logradouro: cepConsulta.logradouro,
+      bairro: cepConsulta.bairro,
+      cep: cepConsulta.cep,
+      cidade: cepConsulta.localidade,
+      estado: cepConsulta.uf
+    });
+  }
+
+
+  abrirModal(content) {
+    this.modalService.open(content);
   }
 }
