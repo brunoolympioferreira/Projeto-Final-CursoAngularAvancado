@@ -12,6 +12,7 @@ import { CepConsulta, Endereco } from '../models/endereco';
 import { FornecedorService } from '../services/fornecedor.service';
 import { StringUtils } from 'src/app/utils/string-utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
   selector: 'app-editar',
@@ -44,7 +45,8 @@ export class EditarComponent implements OnInit {
     private router: Router,
     private toastr: ToastrService,
     private route: ActivatedRoute,
-    private modalService: NgbModal) {
+    private modalService: NgbModal,
+    private spinner: NgxSpinnerService) {
 
     this.validationMessages = {
       nome: {
@@ -84,6 +86,8 @@ export class EditarComponent implements OnInit {
 
   ngOnInit() {
 
+    this.spinner.show();
+
     this.fornecedorForm = this.fb.group({
       id: '',
       nome: ['', [Validators.required]],
@@ -105,6 +109,11 @@ export class EditarComponent implements OnInit {
     });
 
     this.preencherForm();
+
+    setTimeout(() => {
+      this.spinner.hide();
+    }, 1000);
+
   }
 
   preencherForm() {
