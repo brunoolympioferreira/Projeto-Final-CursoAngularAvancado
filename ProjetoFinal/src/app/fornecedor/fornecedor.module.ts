@@ -11,7 +11,6 @@ import { FornecedorService } from './services/fornecedor.service';
 import { EditarComponent } from './editar/editar.component';
 import { ExcluirComponent } from './excluir/excluir.component';
 import { DetalhesComponent } from './detalhes/detalhes.component';
-import { HttpClientModule } from '@angular/common/http';
 import { NgxSpinnerModule } from 'ngx-spinner';
 
 @NgModule({
@@ -28,7 +27,6 @@ import { NgxSpinnerModule } from 'ngx-spinner';
     FornecedorRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule,
     NgxSpinnerModule
   ],
   providers: [

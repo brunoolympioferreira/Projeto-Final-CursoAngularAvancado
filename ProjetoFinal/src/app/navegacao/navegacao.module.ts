@@ -1,3 +1,4 @@
+import { AcessoNegadoComponent } from './acesso-negado/acesso-negado.component';
 import { MenuLoginComponent } from './menu-login/menu-login.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NotFoundComponent } from './not-found/not-found.component';
@@ -14,7 +15,8 @@ import { NgModule } from '@angular/core';
     MenuLoginComponent,
     HomeComponent,
     FooterComponent,
-    NotFoundComponent
+    NotFoundComponent,
+    AcessoNegadoComponent
   ],
   imports: [
     CommonModule,
@@ -25,7 +27,8 @@ import { NgModule } from '@angular/core';
     MenuComponent,
     HomeComponent,
     FooterComponent,
-    NotFoundComponent
+    NotFoundComponent,
+    AcessoNegadoComponent
   ]
 })
 export class NavegacaoModule { }
