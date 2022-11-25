@@ -159,14 +159,16 @@ export class EditarComponent implements OnInit {
     if (this.fornecedorForm.dirty && this.fornecedorForm.valid) {
 
       this.fornecedor = Object.assign({}, this.fornecedor, this.fornecedorForm.value);
+      this.fornecedor.documento = StringUtils.somenteNumeros(this.fornecedor.documento);
+
+      /* Workaround para evitar cast de string para int no back-end */
+      this.fornecedor.tipoFornecedor = parseInt(this.fornecedor.tipoFornecedor.toString());
 
       this.fornecedorService.atualizarFornecedor(this.fornecedor)
-        .subscribe(
-          sucesso => { this.processarSucesso(sucesso) },
-          falha => { this.processarFalha(falha) }
-        );
-
-      this.mudancasNaoSalvas = false;
+        .subscribe({
+          next: sucesso => { this.processarSucesso(sucesso) },
+          error: falha => { this.processarFalha(falha) }
+        });
     }
   }
 

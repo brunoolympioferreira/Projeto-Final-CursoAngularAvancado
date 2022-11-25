@@ -1,12 +1,20 @@
+import { NovoComponent } from './../novo/novo.component';
 import { LocalStorageUtils } from 'src/app/utils/localStorage';
 import { Injectable } from "@angular/core";
 import { ActivatedRouteSnapshot, CanActivate, CanDeactivate, Router, RouterStateSnapshot } from "@angular/router";
 
 @Injectable()
-export class FornececedorGuard implements CanActivate {
+export class FornececedorGuard implements CanActivate, CanDeactivate<NovoComponent> {
   localStorageUtils = new LocalStorageUtils
 
   constructor(private router: Router) { }
+
+  canDeactivate(component: NovoComponent) {
+    if (component.mudancasNaoSalvas) {
+      return window.confirm('Tem certeza que deseja abandonar o preenchimento do formulario?');
+    }
+    return true
+  }
 
   canActivate(routeAc: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
 
