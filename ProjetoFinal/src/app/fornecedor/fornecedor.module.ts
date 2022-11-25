@@ -1,3 +1,4 @@
+import { FornececedorGuard } from './services/fornecedor.guard';
 import { FornecedorResolve } from './services/fornecedor.resolve';
 import { ListaComponent } from './lista/lista.component';
 import { NgModule } from '@angular/core';
@@ -31,7 +32,8 @@ import { NgxSpinnerModule } from 'ngx-spinner';
   ],
   providers: [
     FornecedorService,
-    FornecedorResolve
+    FornecedorResolve,
+    FornececedorGuard
   ]
 })
 export class FornecedorModule { }
