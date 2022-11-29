@@ -106,6 +106,9 @@ export class NovoComponent implements OnInit {
     if (this.produtoForm.dirty && this.produtoForm.valid) {
       this.produto = Object.assign({}, this.produto, this.produtoForm.value);
 
+      this.produto.imagemUpload = this.croppedImage.split(',')[1];
+      this.produto.imagem = this.imagemNome;
+
       this.produto.valor = CurrencyUtils.StringParaDecimal(this.produto.valor);
 
       this.produtoService.novoProduto(this.produto)
