@@ -11,7 +11,9 @@ import { environment } from 'src/environments/environment';
   selector: 'app-excluir',
   templateUrl: './excluir.component.html'
 })
-export class ExcluirComponent  {
+export class ExcluirComponent {
+
+  imagens: string = environment.imagensUrl;
 
   produto: Produto;
 
@@ -26,8 +28,8 @@ export class ExcluirComponent  {
   public excluirProduto() {
     this.produtoService.excluirProduto(this.produto.id)
       .subscribe(
-      evento => { this.sucessoExclusao(evento) },
-      ()     => { this.falha() }
+        evento => { this.sucessoExclusao(evento) },
+        () => { this.falha() }
       );
   }
 
