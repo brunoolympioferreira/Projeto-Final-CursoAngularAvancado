@@ -1,3 +1,4 @@
+import { ListaProdutosComponent } from './produtos/lista-produtos.component';
 import { FornececedorGuard } from './services/fornecedor.guard';
 import { FornecedorResolve } from './services/fornecedor.resolve';
 import { ListaComponent } from './lista/lista.component';
@@ -21,7 +22,8 @@ import { NgxSpinnerModule } from 'ngx-spinner';
     ListaComponent,
     EditarComponent,
     ExcluirComponent,
-    DetalhesComponent
+    DetalhesComponent,
+    ListaProdutosComponent
   ],
   imports: [
     CommonModule,
