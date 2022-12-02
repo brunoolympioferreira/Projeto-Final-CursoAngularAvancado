@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChildren } from '@angular/core';
 import { FormBuilder, FormControl, FormControlName, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { Observable, fromEvent, merge } from 'rxjs';
 
@@ -26,11 +26,14 @@ export class LoginComponent implements OnInit {
   genericValidator: GenericValidator;
   displayMessage: DisplayMessage = {};
 
+  returnUrl: string;
+
   mudancasNaoSalvas: boolean;
 
   constructor(private fb: FormBuilder,
     private contaService: ContaService,
     private router: Router,
+    private route: ActivatedRoute,
     private toastr: ToastrService) {
 
     this.validationMessages = {
@@ -44,6 +47,7 @@ export class LoginComponent implements OnInit {
       }
     };
 
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'];
     this.genericValidator = new GenericValidator(this.validationMessages);
   }
 
@@ -86,7 +90,9 @@ export class LoginComponent implements OnInit {
 
     if (toast) {
       toast.onHidden.subscribe(() => {
-        this.router.navigate(['/home'])
+        this.returnUrl
+          ? this.router.navigate([this.returnUrl])
+          : this.router.navigate(['/home'])
       });
     }
   }
