@@ -2,23 +2,21 @@ import { Component, OnInit, ViewChildren, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormControlName, AbstractControl } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
-import { Observable, fromEvent, merge } from 'rxjs';
-
 import { ToastrService } from 'ngx-toastr';
-
-import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/utils/generic-form-validation';
-import { Fornecedor } from '../models/fornecedor';
-import { CepConsulta, Endereco } from '../models/endereco';
-import { FornecedorService } from '../services/fornecedor.service';
-import { StringUtils } from 'src/app/utils/string-utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgxSpinnerService } from 'ngx-spinner';
+
+import { StringUtils } from 'src/app/utils/string-utils';
+import { Fornecedor } from '../models/fornecedor';
+import { Endereco, CepConsulta } from '../models/endereco';
+import { FornecedorService } from '../services/fornecedor.service';
+import { FormBaseComponent } from 'src/app/base-components/form-base-component';
 
 @Component({
   selector: 'app-editar',
   templateUrl: './editar.component.html'
 })
-export class EditarComponent implements OnInit {
+export class EditarComponent extends FormBaseComponent implements OnInit {
 
   @ViewChildren(FormControlName, { read: ElementRef }) formInputElements: ElementRef[];
 
@@ -30,23 +28,22 @@ export class EditarComponent implements OnInit {
   fornecedor: Fornecedor = new Fornecedor();
   endereco: Endereco = new Endereco();
 
-  validationMessages: ValidationMessages;
-  genericValidator: GenericValidator;
-  displayMessage: DisplayMessage = {};
   textoDocumento: string = '';
-
   tipoFornecedor: number;
-  formResult: string = '';
-
-  mudancasNaoSalvas: boolean;
 
   constructor(private fb: FormBuilder,
     private fornecedorService: FornecedorService,
     private router: Router,
     private toastr: ToastrService,
     private route: ActivatedRoute,
+    config: NgbModalConfig,
     private modalService: NgbModal,
     private spinner: NgxSpinnerService) {
+
+    super();
+
+    config.backdrop = 'static';
+    config.keyboard = false;
 
     this.validationMessages = {
       nome: {
@@ -78,7 +75,7 @@ export class EditarComponent implements OnInit {
       }
     };
 
-    this.genericValidator = new GenericValidator(this.validationMessages);
+    super.configurarMensagensValidacaoBase(this.validationMessages);
 
     this.fornecedor = this.route.snapshot.data['fornecedor'];
     this.tipoFornecedor = this.fornecedor.tipoFornecedor;
@@ -113,10 +110,10 @@ export class EditarComponent implements OnInit {
     setTimeout(() => {
       this.spinner.hide();
     }, 1000);
-
   }
 
   preencherForm() {
+
     this.fornecedorForm.patchValue({
       id: this.fornecedor.id,
       nome: this.fornecedor.nome,
@@ -145,14 +142,57 @@ export class EditarComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.tipoFornecedorForm().valueChanges
-      .subscribe(() => {
-        this.trocarValidacaoDocumento();
-        this.configurarElementosValidacao();
-        this.validarFormulario();
-      });
+    this.tipoFornecedorForm().valueChanges.subscribe(() => {
+      this.trocarValidacaoDocumento();
+      super.configurarValidacaoFormularioBase(this.formInputElements, this.fornecedorForm)
+      super.validarFormulario(this.fornecedorForm)
+    });
 
-    this.configurarElementosValidacao();
+    super.configurarValidacaoFormularioBase(this.formInputElements, this.fornecedorForm);
+  }
+
+  trocarValidacaoDocumento() {
+
+    if (this.tipoFornecedorForm().value === "1") {
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required]);
+    }
+
+    else {
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required]);
+    }
+  }
+
+  documento(): AbstractControl {
+    return this.fornecedorForm.get('documento');
+  }
+
+  tipoFornecedorForm(): AbstractControl {
+    return this.fornecedorForm.get('tipoFornecedor');
+  }
+
+  buscarCep(cep: string) {
+
+    cep = StringUtils.somenteNumeros(cep);
+    if (cep.length < 8) return;
+
+    this.fornecedorService.consultarCep(cep)
+      .subscribe({
+        next: cepRetorno => this.preencherEnderecoConsulta(cepRetorno),
+        error: erro => this.errors.push(erro)
+      });
+  }
+
+  preencherEnderecoConsulta(cepConsulta: CepConsulta) {
+
+    this.enderecoForm.patchValue({
+      logradouro: cepConsulta.logradouro,
+      bairro: cepConsulta.bairro,
+      cep: cepConsulta.cep,
+      cidade: cepConsulta.localidade,
+      estado: cepConsulta.uf
+    });
   }
 
   editarFornecedor() {
@@ -216,65 +256,6 @@ export class EditarComponent implements OnInit {
     this.errorsEndereco = fail.error.errors;
     this.toastr.error('Ocorreu um erro!', 'Opa :(');
   }
-
-  tipoFornecedorForm(): AbstractControl {
-    return this.fornecedorForm.get('tipoFornecedor');
-  }
-
-  documento(): AbstractControl {
-    return this.fornecedorForm.get('documento');
-  }
-
-  trocarValidacaoDocumento() {
-    if (this.tipoFornecedorForm().value === "1") {
-      this.documento().clearValidators();
-      this.documento().setValidators([Validators.required]);
-      this.textoDocumento = "CPF (requerido)";
-    }
-    else {
-      this.documento().clearValidators();
-      this.documento().setValidators([Validators.required]);
-      this.textoDocumento = "CNPJ (requerido)";
-    }
-  }
-
-  configurarElementosValidacao() {
-    let controlBlurs: Observable<any>[] = this.formInputElements
-      .map((formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur'));
-
-    merge(...controlBlurs).subscribe(() => {
-      this.validarFormulario();
-    });
-  }
-
-  validarFormulario() {
-    this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
-    this.mudancasNaoSalvas = true;
-  }
-
-  buscarCep(cep: string) {
-
-    cep = StringUtils.somenteNumeros(cep);
-    if (cep.length < 8) return;
-
-    this.fornecedorService.consultarCep(cep)
-      .subscribe({
-        next: cepRetorno => this.preencherEnderecoConsulta(cepRetorno),
-        error: erro => this.errors.push(erro)
-      });
-  }
-
-  preencherEnderecoConsulta(cepConsulta: CepConsulta) {
-
-    this.enderecoForm.patchValue({
-      logradouro: cepConsulta.logradouro,
-      bairro: cepConsulta.bairro,
-      cep: cepConsulta.cep,
-      cidade: cepConsulta.localidade,
-      estado: cepConsulta.uf
-    });
-  }
-
 
   abrirModal(content) {
     this.modalService.open(content);

@@ -3,20 +3,18 @@ import { Component, OnInit, ViewChildren, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormControlName, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { Observable, fromEvent, merge } from 'rxjs';
-
 import { ToastrService } from 'ngx-toastr';
 
-import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/utils/generic-form-validation';
 import { Fornecedor } from '../models/fornecedor';
 import { FornecedorService } from '../services/fornecedor.service';
 import { CepConsulta } from '../models/endereco';
+import { FormBaseComponent } from 'src/app/base-components/form-base-component';
 
 @Component({
   selector: 'app-novo',
   templateUrl: './novo.component.html'
 })
-export class NovoComponent implements OnInit {
+export class NovoComponent extends FormBaseComponent implements OnInit {
 
   @ViewChildren(FormControlName, { read: ElementRef }) formInputElements: ElementRef[];
 
@@ -24,20 +22,15 @@ export class NovoComponent implements OnInit {
   fornecedorForm: FormGroup;
   fornecedor: Fornecedor = new Fornecedor();
 
-  validationMessages: ValidationMessages;
-  genericValidator: GenericValidator;
-  displayMessage: DisplayMessage = {};
-
   textoDocumento: string = 'CPF (requerido)';
-
   formResult: string = '';
-
-  mudancasNaoSalvas: boolean;
 
   constructor(private fb: FormBuilder,
     private fornecedorService: FornecedorService,
     private router: Router,
     private toastr: ToastrService) {
+
+    super();
 
     this.validationMessages = {
       nome: {
@@ -69,7 +62,7 @@ export class NovoComponent implements OnInit {
       }
     };
 
-    this.genericValidator = new GenericValidator(this.validationMessages);
+    super.configurarMensagensValidacaoBase(this.validationMessages);
   }
 
   ngOnInit() {
@@ -99,25 +92,11 @@ export class NovoComponent implements OnInit {
     this.tipoFornecedorForm().valueChanges
       .subscribe(() => {
         this.trocarValidacaoDocumento();
-        this.configurarElementosValidacao();
-        this.validarFormulario();
+        super.configurarValidacaoFormularioBase(this.formInputElements, this.fornecedorForm)
+        super.validarFormulario(this.fornecedorForm);
       });
 
-    this.configurarElementosValidacao();
-  }
-
-  configurarElementosValidacao() {
-    let controlBlurs: Observable<any>[] = this.formInputElements
-      .map((formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur'));
-
-    merge(...controlBlurs).subscribe(() => {
-      this.validarFormulario();
-    });
-  }
-
-  validarFormulario() {
-    this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
-    this.mudancasNaoSalvas = true;
+    super.configurarValidacaoFormularioBase(this.formInputElements, this.fornecedorForm)
   }
 
   trocarValidacaoDocumento() {
